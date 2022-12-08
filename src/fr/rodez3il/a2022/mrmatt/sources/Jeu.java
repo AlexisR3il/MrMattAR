@@ -47,7 +47,7 @@ public class Jeu {
 	 */
 	public static void main(String[] args) throws IOException {
 		// Le chemin du plateau à charger s'il n'y a aucun argument
-		String chemin = "niveaux/StartHere/1-french-garden.txt";
+		String chemin = "src/niveaux/StartHere/1-french-garden.txt";
 		// vous pouvez changer ici le nom de fichier si vous le souhaitez.
 		if (args.length > 0) {
 			chemin = args[0];

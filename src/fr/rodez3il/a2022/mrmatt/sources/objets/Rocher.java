@@ -3,6 +3,8 @@ import fr.rodez3il.a2022.mrmatt.sources.Niveau;
 
 public class Rocher extends ObjetPlateau {
 
+    private EtatRocher etat;
+
     ///Fonctions
 
     /**
@@ -44,7 +46,14 @@ public class Rocher extends ObjetPlateau {
      */
     @Override
     public void visiterPlateauCalculEtatSuivant(Niveau niveau, int x, int y) {
-
+        niveau.etatSuivantVisiteur(this, x, y);
     }
 
+    public void setEtatRocher(EtatRocher etat) {
+        this.etat = etat;
+    }
+
+    public EtatRocher getEtatRocher() {
+        return this.etat;
+    }
 }
