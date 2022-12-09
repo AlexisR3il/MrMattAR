@@ -18,6 +18,8 @@ public class Niveau {
 
 	private int nbLignes;
 
+	private boolean caTombe = false;
+
 	/**
 	 * Constructeur public : crée un niveau depuis un fichier.
 	 * @param chemin
@@ -27,20 +29,24 @@ public class Niveau {
 		this.chargerNiveau(chemin);
 	}
 
-	/** Methode chargerNiveau appelée par le constructeur */
+	/**
+	 * Methode chargerNiveau appelée par le constructeur
+	 * @param chemin
+	 * @author AlexisR
+	 */
 	private void chargerNiveau(String chemin) {
 		String map = Utils.lireFichier(chemin); /** Fonction lire fichier qui renvoie le contenu d'un fichier sous forme de chaine de caractere complète. */
 		String[] ligneMap = map.split("\n");
 		nbColonnes = Integer.valueOf(ligneMap[0].trim()); /** variable nbColonnes qui stock le nombre de colonne du niveau */
 		nbLignes = Integer.valueOf(ligneMap[1].trim()); /** variable nbLignes qui stock le nombre de ligne du niveau */
-		System.out.println(nbColonnes);
+		System.out.println(nbColonnes + " " + nbLignes);
 		plateau = new ObjetPlateau[nbColonnes][nbLignes];
 		String[] tableauFinal = new String[nbLignes];
 
 		/** Permet d'enlever la ligne 1 et 2 du niveau */
-		int compteur =0, n=0;
+		int compteur = 0, n = 0;
 		for(String charactGame : ligneMap){
-			if (compteur>1 && !charactGame.startsWith(" ")){
+			if (compteur > 1 && !charactGame.startsWith(" ")){
 				tableauFinal[n]=charactGame;
 				n++;
 			}
@@ -68,6 +74,11 @@ public class Niveau {
 	/**
 	 * Méthode echanger qui permet d'échanger l'objet en position (sourceX, sourceY)
 	 * avec celui en position (destinationX, destinationY).
+	 * @param sourceX
+	 * @param sourceY
+	 * @param destinationX
+	 * @param destinationY
+	 * @author AlexisR
 	 */
 	private void echanger(int sourceX, int sourceY, int destinationX, int destinationY) {
 		ObjetPlateau unObjetPlateau = plateau[sourceX][sourceY];
@@ -79,6 +90,7 @@ public class Niveau {
 	 * Produit une sortie du niveau sur la sortie standard.
 	 * Affiche le niveau sous forme ASCII, mais aussi le nombre de déplacements totaux du joueur
 	 * et le nombre de pommes restantes à collecter.
+	 * @author AlexisR
 	 */
 	public void afficher() {
 		for(int numeroLigne = 0; numeroLigne < nbLignes; ++numeroLigne) { /** On parcourt la map et on crée un objet pour chaque élément rencontré */
@@ -89,27 +101,35 @@ public class Niveau {
 		}
 		System.out.println("Vous avez effectué " + compteurDeplacement + " déplacements" + "\n" + "Il reste " + nbPommes + " Pommes");
 
-
 	}
 
-	/** patron visiteur Rocher */
+	/**
+	 * patron visiteur Rocher, permet d'utiliser les methodes set et get etatRocher de la classe Rocher
+	 * en fonction des changements au sein du niveau, et par la même occasion savoir si un joueur se
+	 * fait écraser par un rocher.
+	 * @param r
+	 * @param x
+	 * @param y
+	 * @author AlexisR
+	 */
 	public void etatSuivantVisiteur(Rocher r, int x, int y) {
 		if (r.getEtatRocher() == EtatRocher.Chute) {
+			caTombe = true;
 			if (x + 1 == this.plateau[0].length - 1) {
 				r.setEtatRocher(EtatRocher.Immobile);
 			}
-			else if (this.plateau[x+1][y].estVide()) {
-				this.echanger(x, y, x+1, y);
+			else if (this.plateau[x + 1][y].estVide()) {
+				this.echanger(x, y, x + 1, y);
 			}
-			else if (this.joueurX == x+1 && this.joueurY == y) {
+			else if (this.joueurX == x + 1 && this.joueurY == y) {
 				this.perdu = true;
 			}
-			else if (this.plateau[x+1][y].estGlissant()) {
-				if (this.plateau[x][y-1].estVide() && this.plateau[x+1][y-1].estVide()) {
-					this.echanger(x, y, x+1, y -1);
+			else if (this.plateau[x + 1][y].estGlissant()) {
+				if (this.plateau[x][y - 1].estVide() && this.plateau[x + 1][y - 1].estVide()) {
+					this.echanger(x, y, x + 1, y - 1);
 				}
-				else if (this.plateau[x][y+1].estVide() && this.plateau[x+1][y+1].estVide()) {
-					this.echanger(x, y, x+1, y+1);
+				else if (this.plateau[x][y+ 1].estVide() && this.plateau[x + 1][y + 1].estVide()) {
+					this.echanger(x, y, x + 1, y + 1);
 				}
 				else {
 					r.setEtatRocher(EtatRocher.Immobile);
@@ -120,8 +140,9 @@ public class Niveau {
 			}
 		}
 		else if(r.getEtatRocher() == EtatRocher.Immobile) {
-			if(x+1 < this.plateau.length && this.plateau[x+1][y].estVide()) {
+			if(x + 1 < this.nbLignes && this.plateau[x + 1][y].estVide()) {
 				r.setEtatRocher(EtatRocher.Chute);
+				caTombe = true;
 			}
 		}
 		else if (r.getEtatRocher() == EtatRocher.Chute) {
@@ -134,49 +155,64 @@ public class Niveau {
 	}
 
 	/**
-	 * Calcule l'état suivant du niveau.
-	 * ........
-	 * @author
+	 * Calcule l'état suivant du niveau en parcourant toute les cases de ce dernier.
+	 * @AlexisR
 	 */
 	public void etatSuivant() {
-		for (int numeroLigne = 2; numeroLigne < plateau.length; ++numeroLigne) {
-			for (int numeroColonne = 0; numeroColonne < plateau.length; ++numeroColonne) {
-				this.plateau[numeroLigne][numeroColonne].visiterPlateauCalculEtatSuivant(this, numeroLigne, numeroColonne);
+		caTombe = false;
+		for (int numeroLigne = 0; numeroLigne < nbLignes-1; ++numeroLigne) {
+			for (int numeroColonne = 0; numeroColonne < nbColonnes-1; ++numeroColonne) {
+				this.plateau[numeroColonne][numeroLigne].visiterPlateauCalculEtatSuivant(this, numeroColonne, numeroLigne);
 			}
 		}
 	}
 
 	// Illustrez les Javadocs manquantes lorsque vous coderez ces méthodes !
 
-	/** A faire */
+	/**
+	 * Méthode permettant de savoir si la partie continue ou quand elle s'arrête.
+	 * @author AlexisR
+	 */
 	public boolean enCours() {
-		return false;
+		if(this.perdu) {
+			return false;
+		}
+		else if(this.nbPommes == 0) {
+			return false;
+		}
+		return true;
 	}
 
-	// Joue la commande C passée en paramètres
+	/**Methode jouer qui utilise l'énumération Commande pour savoir quelle action le
+	 * joueur veut effectuer. On utilise la méthode deplacementPossible pour savoir si
+	 * la commandre saisie par le joueur peut se réaliser, puis la méthode déplacer pour
+	 * réaliser l'action demander si c'est une action de déplacement.
+	 * @param c
+	 * @author AlexisR
+	 */
 	public boolean jouer(Commande c) {
 		switch(c) {
 			case HAUT:
-				if(deplacementPossible(this.joueurX - 1, this.joueurY)) {
-					this.deplacer(this.joueurX - 1, this.joueurY);
-					this.compteurDeplacement++;
-				}
-				break;
-			case BAS:
-				if(deplacementPossible(this.joueurX + 1, this.joueurY)) {
-					this.deplacer(this.joueurX + 1, this.joueurY);
-					this.compteurDeplacement++;
-				}
-				break;
-			case GAUCHE:
 				if(deplacementPossible(this.joueurX, this.joueurY - 1)) {
 					this.deplacer(this.joueurX, this.joueurY - 1);
 					this.compteurDeplacement++;
 				}
 				break;
-			case DROITE:
+			case BAS:
 				if(deplacementPossible(this.joueurX, this.joueurY + 1)) {
 					this.deplacer(this.joueurX, this.joueurY + 1);
+					this.compteurDeplacement++;
+				}
+				break;
+			case GAUCHE:
+				if(deplacementPossible(this.joueurX - 1, this.joueurY)) {
+					this.deplacer(this.joueurX - 1, this.joueurY);
+					this.compteurDeplacement++;
+				}
+				break;
+			case DROITE:
+				if(deplacementPossible(this.joueurX + 1, this.joueurY)) {
+					this.deplacer(this.joueurX + 1, this.joueurY);
 					this.compteurDeplacement++;
 				}
 				break;
@@ -194,6 +230,7 @@ public class Niveau {
 
 	/**
 	 * Affiche l'état final (gagné ou perdu) une fois le jeu terminé.
+	 * @author AlexisR
 	 */
 	public void afficherEtatFinal() {
 		if (this.gagne) {
@@ -207,23 +244,40 @@ public class Niveau {
 	 * A faire
 	 */
 	public boolean estIntermediaire() {
+		/*if (caTombe){
+			return true;
+		}*/
 		return false;
 	}
 
+	/**
+	 * Methode deplacer qui va permettre au joueur de changer sa position avec celle qu'il désire
+	 * (une case au dessus, en dessous, à droite ou à gauche). Cette méthode inclue aussi la possibilité
+	 * de pousser un rocher à condition que c'est bien un déplacement horizontal et si l'environnement le permet
+	 * @param deltaX
+	 * @param deltaY
+	 * @author AlexisR
+	 */
 	private void deplacer(int deltaX, int deltaY) {
-		if (deltaY == 0 && plateau[joueurY][joueurX + deltaX].estPoussable()) {
-			this.echanger(joueurX + deltaX, joueurY, joueurX + (2 * deltaX), joueurY);
-			this.echanger(joueurX, joueurY, joueurX + deltaX, joueurY);
-		} else {
-			this.echanger(joueurX, joueurY, joueurX + deltaX, joueurY + deltaY);
-			plateau[joueurY][joueurX] = new Vide();
-		}
-		joueurX += deltaX;
-		joueurY += deltaY;
+			this.echanger(joueurX, joueurY, deltaX, deltaY);
+			plateau[joueurX][joueurY] = new Vide();
+		joueurX = deltaX;
+		joueurY = deltaY;
 	}
 
-	/** A faire */
+	/**
+	 * Methode pour savoir si la case où veut aller le joueur est bien dans le plateau
+	 * et est marchable.
+	 * @param joueurX
+	 * @param joueurY
+	 * @author AlexisR
+	 */
 	public boolean deplacementPossible(int joueurX, int joueurY) {
+		if (joueurX >= 0 && joueurY >= 0 && joueurX < nbLignes - 1 && joueurY < nbColonnes - 1) {
+			if (plateau[joueurX][joueurY].estMarchable()) {
+				return true;
+			}
+		}
 		return false;
 	}
 }

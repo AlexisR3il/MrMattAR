@@ -5,6 +5,10 @@ public class Rocher extends ObjetPlateau {
 
     private EtatRocher etat;
 
+    public Rocher(){
+        this.etat = etat.Immobile;
+    }
+
     ///Fonctions
 
     /**
